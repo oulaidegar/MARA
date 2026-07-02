@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Country {
+  id                  String         @id
+  name                String
+  shortName           String
+  flag                String
+  tier                Int
+  region              String
+  computeScore        Int
+  privacyScore        Int
+  governanceScore     Int
+  
+  // Demographics
+  gdp                 String
+  gdpGrowth           String
+  gdpPPP              String
+  population          String
+  populationGrowth    String
+  avgWage             String
+  medianAge           Float
+  stemGrads           Int
+  stemGradGrowth      String
+  literacy            String
+  internetPenetration String
+
+  // Privacy
+  privacyAdequacy     String
+  laws                Json?          // Array of laws: { name, status, year, zone }
+  gdprGrid            Json?          // GDPR discrepancies key-value pairs
+
+  // Disputes & Diaspora
+  diaspora            Json?          // Array of diaspora: { emoji, name, role, location }
+  officialDisputes    Json?          // Array of disputes: { text, source }
+  critiqueDisputes    Json?          // Array of critique: { text, source }
+
+  // Relations
+  dataCenters         DataCenter[]
+  aiModels            AIModel[]
+  capitalFlows        CapitalFlow[]
+  organizations       Organization[]
+}
+
+model DataCenter {
+  id             String   @id @default(uuid())
+  name           String
+  location       String
+  megawatts      Float
+  tier           String
+  operator       String
+  parent         String
+  solar          String
+  cooling        String
+  certifications Json?    // Array of strings
+  
+  countryId      String
+  country        Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+}
+
+model AIModel {
+  id           String   @id @default(uuid())
+  emoji        String
+  name         String
+  developer    String
+  license      String
+  architecture String
+  params       String
+  languages    Json?    // Array of strings
+  launched     String
+  
+  countryId    String
+  country      Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+}
+
+model CapitalFlow {
+  id         String   @id @default(uuid())
+  investor   String
+  amount     String
+  target     String
+  year       Int
+  type       String
+  note       String
+  
+  countryId  String
+  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+}
+
+model EthicsFigure {
+  id          String   @id @default(uuid())
+  name        String
+  role        String
+  affiliation String
+  avatar      String
+  focus       String
+  critique    String
+  stance      String
+  quote       String
+  twitter     String?
+  scholar     String?
+}
+
+model PolicyPaper {
+  id        String   @id @default(uuid())
+  title     String
+  author    String
+  source    String
+  year      Int
+  category  String
+  tldr      String
+  dialectic Json?    // Array of dialects: { view, critique }
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  emoji       String
+  name        String
+  role        String
+  org         String
+  status      String
+  statusColor String
+  focus       String
+  desc        String
+  url         String?
+  
+  countryId   String?
+  country     Country? @relation(fields: [countryId], references: [id])
+}
+
+model Guide {
+  id          String         @id
+  emoji       String
+  title       String
+  subtitle    String
+  colorAccent String
+  sections    GuideSection[]
+}
+
+model GuideSection {
+  id      String @id @default(uuid())
+  heading String
+  body    String
+  
+  guideId String
+  guide   Guide  @relation(fields: [guideId], references: [id], onDelete: Cascade)
+}
+
+model LexiconTerm {
+  id         String @id @default(uuid())
+  term       String
+  category   String
+  definition String
+}
+
+model NetworkNode {
+  id      String  @id
+  label   String
+  type    String
+  country String
+  size    Int
+  flag    String?
+  aum     String?
+  founded String?
+  tags    Json?   // Array of strings
+}
+
+model NetworkEdge {
+  id     String @id
+  source String
+  target String
+  label  String
+  value  Float
+  year   Int?
+}
+
+model PDFText {
+  id       String @id @default(uuid())
+  title    String
+  author   String
+  category String
+  summary  String
+  url      String
+}
+
+model SystemSettings {
+  id      String @id @default("global")
+  tagline String
+  mission String
+  vision  String
+}

@@ -278,3 +278,7 @@ const DEFAULT_NETWORK_DATA = {
     { id:'e48', source:'adq',        target:'noon',        label:'Strategic backer',     value:0,           year:2020 }
   ]
 };
+
+if (typeof module !== 'undefined') {
+  module.exports = DEFAULT_NETWORK_DATA;
+}

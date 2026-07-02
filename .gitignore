@@ -4,3 +4,5 @@
 step_310_content.txt
 node_modules/
 .env
+
+/src/generated/prisma

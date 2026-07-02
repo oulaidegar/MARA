@@ -1544,3 +1544,7 @@ const MARA_DATA = {
     { term: 'Arabic NLP', category: 'Technology', definition: 'Computational techniques and datasets tailored to process, parse, and generate the Arabic language, addressing the grammatical and morphological complexity of Modern Standard Arabic (MSA) and regional dialects.' }
   ]
 };
+
+if (typeof module !== 'undefined') {
+  module.exports = MARA_DATA;
+}
