@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MARA · Middle East & North Africa Research Archive</title>
+  <meta name="description" content="MARA – Open-access research intelligence platform tracking AI sovereignty, infrastructure, privacy law, and civil society across the MENA region." />
+  <meta name="keywords" content="MENA AI, Arab AI ethics, Middle East data protection, GDPR MENA, Falcon LLM, digital rights MENA" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/design-system.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/map.css" />
+  <link rel="stylesheet" href="css/dossier.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/modules-b-c.css" />
+  <link rel="stylesheet" href="css/network.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+
+  <!-- D3 v7 + TopoJSON -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* Scanline ambient effect on map background */
+    #map-container::after {
+      content: '';
+      position: absolute;
+      top: -100%; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(transparent, rgba(0,212,170,0.04), transparent);
+      animation: scanline 8s linear infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Hero gradient orbs for map */
+    .map-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .map-orb-1 { width: 400px; height: 400px; background: var(--accent-teal); top: 20%; left: 30%; }
+    .map-orb-2 { width: 300px; height: 300px; background: var(--accent-gold); bottom: 10%; right: 20%; }
+
+    /* Full-width table container */
+    .table-scroll { overflow-x: auto; }
+
+    /* Paper matrix wrapper */
+    .paper-matrix-wrap {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="grid-bg">
+
+<!-- ═══════════════════════════════════════════════════════════
+     NAVIGATION BAR
+═══════════════════════════════════════════════════════════ -->
+<nav id="navbar" role="navigation" aria-label="Main navigation">
+  <!-- Logo -->
+  <a class="nav-logo" href="#" id="nav-logo">
+    <div class="nav-logo-mark">M</div>
+    <div class="nav-logo-text">MAR<span>A</span></div>
+  </a>
+
+  <!-- Module Tabs -->
+  <div class="nav-modules" role="tablist" aria-label="Platform modules">
+    <button class="nav-module-btn active" data-module="spatial" id="nav-btn-spatial" role="tab" aria-selected="true">
+      <span class="nav-icon">🗺️</span> Spatial Explorer
+    </button>
+    <button class="nav-module-btn" data-module="ethics" id="nav-btn-ethics" role="tab" aria-selected="false">
+      <span class="nav-icon">🧠</span> Ethics & Governance
+    </button>
+    <button class="nav-module-btn" data-module="literacy" id="nav-btn-literacy" role="tab" aria-selected="false">
+      <span class="nav-icon">📚</span> Literacy Portal
+    </button>
+    <button class="nav-module-btn" data-module="network" id="nav-btn-network" role="tab" aria-selected="false">
+      <span class="nav-icon">🕸️</span> Investment Graph
+    </button>
+    <button class="nav-module-btn" data-module="pdfs" id="nav-btn-pdfs" role="tab" aria-selected="false">
+      <span class="nav-icon">📚</span> Knowledge Library
+    </button>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-tagline">MENA · AI · SOVEREIGNTY · RIGHTS</div>
+    <div class="nav-status">
+      <div class="nav-status-dot"></div>
+      <span>Live Archive · 2025</span>
+    </div>
+    <button id="admin-trigger" title="Admin panel (Cmd+Shift+A)" aria-label="Open admin panel">🔐</button>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE CONTENT
+═══════════════════════════════════════════════════════════ -->
+<main id="page-content">
+
+  <!-- ────────────────────────────────────────────────────────
+       MODULE A – SPATIAL EXPLORER
+  ──────────────────────────────────────────────────────── -->
+  <section id="module-spatial" class="module-panel active" role="tabpanel" aria-labelledby="nav-btn-spatial">
+
+    <!-- Map Container -->
+    <div id="map-container">
+      <!-- Ambient orbs -->
+      <div class="map-orb map-orb-1"></div>
+      <div class="map-orb map-orb-2"></div>
+
+      <!-- SVG Map -->
+      <div id="map-svg-container">
+        <svg id="map-svg" role="img" aria-label="Interactive MENA region choropleth map"></svg>
+      </div>
+
+      <!-- Loading overlay -->
+      <div id="map-loading" role="status" aria-live="polite">
+        <div class="loader"></div>
+        <span>Loading MENA cartography…</span>
+      </div>
+
+      <!-- Country info bar (top centre) -->
+      <div id="map-infobar">
+        <strong>MARA</strong> · Hover a country · Click to open dossier
+      </div>
+
+      <!-- Live score bar (top left) -->
+      <div id="score-bar" role="complementary" aria-label="Country score summary">
+        <div class="score-bar-title">📊 Select a country</div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">Compute</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:0%;background:var(--accent-teal)"></div></div>
+          <span class="score-bar-val">—</span>
+        </div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">Privacy</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:0%;background:#60A5FA"></div></div>
+          <span class="score-bar-val">—</span>
+        </div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">Governance</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:0%;background:var(--accent-gold)"></div></div>
+          <span class="score-bar-val">—</span>
+        </div>
+      </div>
+
+      <!-- Legend (bottom left) -->
+      <div id="map-legend" role="legend" aria-label="Map tier legend">
+        <div class="legend-title">Infrastructure Tier</div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#0D9066"></div>
+          <span>Tier 1 — Global Leader</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#C17A0A"></div>
+          <span>Tier 2 — Emerging</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#B53030"></div>
+          <span>Tier 3 — Developing</span>
+        </div>
+        <div class="divider" style="margin:10px 0"></div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#0F1A2E;border:1px solid rgba(120,160,255,0.2)"></div>
+          <span style="color:var(--text-faint)">Non-MENA region</span>
+        </div>
+      </div>
+
+      <!-- Zoom controls (bottom right) -->
+      <div id="map-zoom-controls" aria-label="Map zoom controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+        <button class="zoom-btn" id="zoom-reset" title="Reset view" aria-label="Reset zoom" style="font-size:12px">⌂</button>
+      </div>
+
+      <!-- Click hint -->
+      <div id="map-click-hint" aria-hidden="true">
+        <div class="hint-text">↑ Click any highlighted country</div>
+      </div>
+    </div>
+
+    <!-- Tooltip (fixed position) -->
+    <div id="map-tooltip" role="tooltip" aria-hidden="true"></div>
+
+    <!-- ─── COUNTRY DOSSIER PANEL ───────────────────────── -->
+    <aside id="dossier-panel" role="complementary" aria-label="Country dossier">
+      <!-- Header (injected by JS) -->
+      <div id="dossier-header"></div>
+
+      <!-- Tab Navigation -->
+      <nav id="dossier-tabs" role="tablist" aria-label="Dossier sections">
+        <button class="dossier-tab active" data-tab="0" role="tab">
+          <span class="tab-icon">🌍</span> Demographics
+        </button>
+        <button class="dossier-tab" data-tab="1" role="tab">
+          <span class="tab-icon">🔒</span> Privacy Ledger
+        </button>
+        <button class="dossier-tab" data-tab="2" role="tab">
+          <span class="tab-icon">🏗️</span> Infrastructure
+        </button>
+        <button class="dossier-tab" data-tab="3" role="tab">
+          <span class="tab-icon">⚖️</span> Disputes
+        </button>
+        <button class="dossier-tab" data-tab="4" role="tab">
+          <span class="tab-icon">👥</span> Ecosystem
+        </button>
+      </nav>
+
+      <!-- Tab Content -->
+      <div id="dossier-body">
+        <div id="tab-demographics" class="dossier-tab-pane active" role="tabpanel"></div>
+        <div id="tab-privacy"      class="dossier-tab-pane" role="tabpanel"></div>
+        <div id="tab-infrastructure" class="dossier-tab-pane" role="tabpanel"></div>
+        <div id="tab-disputes"     class="dossier-tab-pane" role="tabpanel"></div>
+        <div id="tab-ecosystem"    class="dossier-tab-pane" role="tabpanel"></div>
+
+        <!-- Empty state when no country selected -->
+        <div id="dossier-empty" style="display:none" class="empty-state">
+          <div class="icon">🗺️</div>
+          <p>Select a country on the map to load its dossier</p>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+
+
+  <!-- ────────────────────────────────────────────────────────
+       MODULE B – ETHICS & GOVERNANCE HUB
+  ──────────────────────────────────────────────────────── -->
+  <section id="module-ethics" class="module-panel" role="tabpanel" aria-labelledby="nav-btn-ethics">
+    <div class="full-page-module">
+
+      <header class="module-header">
+        <div class="module-header-eyebrow">Module B</div>
+        <h1>🧠 Global Ethics &amp; Governance Hub</h1>
+        <p>A research intelligence layer connecting AI ethicists, policy frameworks, academic rebuttals, and civil society organizations shaping the future of algorithmic accountability in MENA and globally.</p>
+      </header>
+
+      <!-- Sub-navigation -->
+      <nav class="module-subnav" aria-label="Ethics hub sections">
+        <button class="subnav-btn active" data-target="figures" id="ethics-nav-figures">👤 Figures Directory</button>
+        <button class="subnav-btn" data-target="papers" id="ethics-nav-papers">📄 Paper Dialogue Matrix</button>
+        <button class="subnav-btn" data-target="orgs" id="ethics-nav-orgs">🏛️ Organization Index</button>
+      </nav>
+
+      <!-- ── Figures Directory Pane ── -->
+      <div class="module-subpane active" id="ethics-pane-figures">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AI Ethicists & Researchers</div>
+            <div class="section-subtitle">Global and regional figures shaping AI accountability discourse</div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="figures-toolbar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              type="search"
+              id="figures-search"
+              class="search-input"
+              placeholder="Search by name, institution, or research area…"
+              aria-label="Search figures"
+            />
+          </div>
+          <div class="filter-pills" role="group" aria-label="Filter by region">
+            <button class="filter-pill active" data-filter="all">All</button>
+            <button class="filter-pill" data-filter="mena">MENA</button>
+            <button class="filter-pill" data-filter="global">Global</button>
+            <button class="filter-pill" data-filter="bias">Bias</button>
+            <button class="filter-pill" data-filter="policy">Policy</button>
+            <button class="filter-pill" data-filter="safety">AI Safety</button>
+          </div>
+        </div>
+
+        <div class="figures-grid" id="figures-grid" role="list" aria-label="Ethics figures"></div>
+      </div>
+
+      <!-- ── Paper Dialogue Matrix Pane ── -->
+      <div class="module-subpane" id="ethics-pane-papers">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Policy ↔ Academic Dialogue Matrix</div>
+            <div class="section-subtitle">Official frameworks set against peer-reviewed rebuttals and civil society critiques</div>
+          </div>
+        </div>
+
+        <div class="paper-matrix-wrap table-scroll">
+          <table class="paper-matrix-table" id="papers-matrix" role="table" aria-label="Policy dialogue matrix">
+            <thead>
+              <tr>
+                <th style="width:22%">Policy Framework</th>
+                <th style="width:42%">Official Summary &amp; Scope</th>
+                <th style="width:36%">Academic / Civil Rebuttal</th>
+              </tr>
+            </thead>
+            <tbody id="papers-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Organization Index Pane ── -->
+      <div class="module-subpane" id="ethics-pane-orgs">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Regulatory Panels &amp; Civil Watchdogs</div>
+            <div class="section-subtitle">International bodies, research institutes, and civil society organizations in the MENA AI accountability ecosystem</div>
+          </div>
+        </div>
+        <div class="org-grid" id="orgs-grid" role="list" aria-label="Organizations"></div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ────────────────────────────────────────────────────────
+       MODULE C – LITERACY PORTAL
+  ──────────────────────────────────────────────────────── -->
+  <section id="module-literacy" class="module-panel" role="tabpanel" aria-labelledby="nav-btn-literacy">
+    <div class="full-page-module">
+
+      <header class="module-header">
+        <div class="module-header-eyebrow">Module C</div>
+        <h1>📚 Literacy Portal &amp; Educational Engine</h1>
+        <p>Plain-language interactive guides and a live mathematical simulator to understand the trade-offs shaping MENA's AI future.</p>
+      </header>
+
+      <!-- Guide cards -->
+      <div class="guide-intro-grid" id="guide-cards" role="list" aria-label="Conceptual guides"></div>
+
+      <div class="section-header" style="margin-bottom:var(--sp-5)">
+        <div>
+          <div class="section-title">Conceptual Guides</div>
+          <div class="section-subtitle">Click any card above or expand a guide below</div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <!-- Accordions -->
+      <div id="guide-accordions" style="margin-bottom:var(--sp-16)"></div>
+
+      <!-- Case Impact Simulator -->
+      <div class="section-header">
+        <div>
+          <div class="section-title">⚖️ Case Impact Simulator</div>
+          <div class="section-subtitle">Adjust the policy levers and watch the ecosystem respond in real time</div>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+
+      <div class="simulator-wrap">
+        <!-- Controls -->
+        <div class="simulator-controls">
+          <div>
+            <div class="sim-title">Policy Trade-off Engine</div>
+            <div class="sim-desc">Simulate the real-world tension between maximising corporate AI innovation and enforcing civil data protection law. Move the sliders to see how each policy priority affects key ecosystem metrics.</div>
+          </div>
+
+          <!-- Innovation slider -->
+          <div class="sim-slider-group">
+            <div class="sim-slider-label">
+              <span class="sim-slider-name">🚀 Innovation Priority</span>
+              <span class="sim-slider-val innovation" id="sim-innovation-val">60</span>
+            </div>
+            <input
+              type="range" id="sim-innovation"
+              class="innovation-slider"
+              min="0" max="100" value="60" step="1"
+              aria-label="Innovation priority slider"
+            />
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-faint)">
+              <span>Heavy Regulation</span>
+              <span>Corporate First</span>
+            </div>
+          </div>
+
+          <!-- Civil protection slider -->
+          <div class="sim-slider-group">
+            <div class="sim-slider-label">
+              <span class="sim-slider-name">🛡️ Civil Data Protection</span>
+              <span class="sim-slider-val civil" id="sim-civil-val">40</span>
+            </div>
+            <input
+              type="range" id="sim-civil"
+              class="civil-slider"
+              min="0" max="100" value="40" step="1"
+              aria-label="Civil protection slider"
+            />
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-faint)">
+              <span>No Protection</span>
+              <span>GDPR-Equivalent</span>
+            </div>
+          </div>
+
+          <!-- Results grid -->
+          <div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:var(--sp-3)">Ecosystem Outputs (0–100)</div>
+            <div class="sim-results-grid">
+              <div class="sim-result-item">
+                <div class="sri-label">Economic</div>
+                <div class="sri-value" id="sim-res-economic">—</div>
+                <div class="sri-sub">Growth Index</div>
+              </div>
+              <div class="sim-result-item">
+                <div class="sri-label">Privacy</div>
+                <div class="sri-value" id="sim-res-privacy">—</div>
+                <div class="sri-sub">Protection Score</div>
+              </div>
+              <div class="sim-result-item">
+                <div class="sri-label">Trust</div>
+                <div class="sri-value" id="sim-res-trust">—</div>
+                <div class="sri-sub">Public Trust</div>
+              </div>
+              <div class="sim-result-item">
+                <div class="sri-label">Talent</div>
+                <div class="sri-value" id="sim-res-talent">—</div>
+                <div class="sri-sub">Retention Score</div>
+              </div>
+              <div class="sim-result-item">
+                <div class="sri-label">Capital</div>
+                <div class="sri-value" id="sim-res-investment">—</div>
+                <div class="sri-sub">Investment Flow</div>
+              </div>
+              <div class="sim-result-item">
+                <div class="sri-label">Risk</div>
+                <div class="sri-value" id="sim-res-risk">—</div>
+                <div class="sri-sub">AI Safety Risk</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="simulator-chart-wrap">
+          <div class="sim-chart-header">
+            <div class="sim-chart-title">Live Ecosystem Radar</div>
+            <div class="sim-chart-sub">Each dimension shows the modeled outcome of your selected policy mix</div>
+          </div>
+          <canvas id="sim-chart" aria-label="Policy impact radar chart" role="img"></canvas>
+        </div>
+      </div>
+
+      <!-- Vision Statement Footer -->
+      <div style="margin-top:var(--sp-16);border-top:1px solid var(--border-subtle);padding-top:var(--sp-10)">
+        <div class="module-header-eyebrow" style="margin-bottom:var(--sp-4)">MARA Vision &amp; Mission</div>
+        <div class="grid-2" style="gap:var(--sp-8)">
+          <div class="info-card">
+            <div style="font-size:2rem;margin-bottom:var(--sp-4)">👁️</div>
+            <h3 style="margin-bottom:var(--sp-3)">Vision Statement</h3>
+            <p style="font-size:var(--text-sm);line-height:1.8">To foster a MENA region where technological sovereignty and algorithmic advancement are inextricably bound to human dignity, transparency, and civil equity. We envision a future where regional AI ecosystems—from Cairo to Abu Dhabi—are not merely measured by their compute capacity or capital reserves, but by the robustness of their judicial guardrails, the preservation of their cultural identities, and the guaranteed protection of their citizens' digital rights.</p>
+          </div>
+          <div class="info-card">
+            <div style="font-size:2rem;margin-bottom:var(--sp-4)">🎯</div>
+            <h3 style="margin-bottom:var(--sp-3)">Mission Statement</h3>
+            <p style="font-size:var(--text-sm);line-height:1.8">MARA exists to democratize access to critical tech intelligence in the Middle East and North Africa. By providing an open-access, bilingual, and bidirectional research archive, we bridge the gap between official state-led AI initiatives and independent civil society critiques. We track physical infrastructure, corporate capital flows, legal frameworks, and academic scholarship to empower researchers, policymakers, journalists, and citizens with the data required to hold algorithmic systems accountable.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ────────────────────────────────────────────────────────
+       MODULE D – INVESTMENT KNOWLEDGE GRAPH
+  ──────────────────────────────────────────────────────── -->
+  <section id="module-network" class="module-panel" role="tabpanel" aria-labelledby="nav-btn-network" style="flex-direction:row;padding:0;">
+
+    <!-- Graph Canvas -->
+    <div id="network-canvas">
+      <svg id="network-svg"></svg>
+
+      <!-- Toolbar -->
+      <div id="network-toolbar">
+        <div class="ntb-search">
+          <span class="ntb-search-icon">🔍</span>
+          <input type="search" id="net-search" placeholder="Search entities, tags, countries…" aria-label="Search graph nodes" />
+        </div>
+        <div class="ntb-divider"></div>
+        <button class="ntb-btn ntb-btn-add" id="ntb-add-node" title="Add new entity">＋ Add Entity</button>
+        <button class="ntb-btn ntb-btn-connect" id="ntb-add-conn" title="Add connection between nodes">→ Add Connection</button>
+        <div class="ntb-divider"></div>
+        <button class="ntb-btn ntb-btn-ghost" id="ntb-export" title="Export graph as JSON">⬇ Export</button>
+        <button class="ntb-btn ntb-btn-ghost" id="ntb-import" title="Import JSON graph data">⬆ Import</button>
+        <input type="file" id="net-import-input" accept=".json" style="display:none" />
+        <div class="ntb-divider"></div>
+        <button class="ntb-btn ntb-btn-danger" id="ntb-reset" title="Reset to default data">↺ Reset</button>
+      </div>
+
+      <!-- Stats box -->
+      <div id="network-stats" role="complementary" aria-label="Graph statistics">
+        <div class="nstat-title">🕸️ MENA Graph</div>
+        <div id="network-stats-body"></div>
+      </div>
+
+      <!-- Legend -->
+      <div id="network-legend">
+        <div class="nleg-title">Entity Types</div>
+        <div id="network-legend-items"></div>
+      </div>
+
+      <!-- Zoom controls -->
+      <div id="network-zoom-controls">
+        <button class="nzoom-btn" id="nzoom-in"  title="Zoom in">+</button>
+        <button class="nzoom-btn" id="nzoom-out" title="Zoom out">−</button>
+        <button class="nzoom-btn" id="nzoom-reset" title="Reset zoom" style="font-size:12px">⌂</button>
+      </div>
+
+      <!-- Connect mode banner -->
+      <div id="connect-mode-banner"></div>
+
+      <!-- Tooltip -->
+      <div id="network-tooltip" role="tooltip" aria-hidden="true"></div>
+    </div>
+
+    <!-- Right detail panel -->
+    <aside id="network-detail-panel" role="complementary" aria-label="Entity detail panel">
+      <div id="ndp-content"></div>
+    </aside>
+
+    <!-- Context Menu -->
+    <div id="network-context-menu" role="menu" aria-label="Node actions">
+      <div class="ctx-menu-header">Entity actions</div>
+      <button class="ctx-menu-item" id="ctx-zoom" role="menuitem">🔍 Focus &amp; Zoom to</button>
+      <button class="ctx-menu-item" id="ctx-edit" role="menuitem">✏️ Edit entity</button>
+      <button class="ctx-menu-item" id="ctx-connect" role="menuitem">🔗 Connect from here</button>
+      <div class="ctx-menu-divider"></div>
+      <button class="ctx-menu-item danger" id="ctx-delete" role="menuitem">🗑️ Delete entity</button>
+    </div>
+
+    <!-- Add Node Modal -->
+    <div class="nmodal-overlay hidden" id="add-node-modal" role="dialog" aria-modal="true" aria-labelledby="node-form-title">
+      <div class="nmodal">
+        <div class="nmodal-title" id="node-form-title">+ Add New Entity</div>
+        <div class="nmodal-sub">Add a new company, fund, government body, or individual to the investment graph.</div>
+        <div class="nform-grid">
+          <div class="nform-group full">
+            <label class="nform-label" for="nf-label">Entity Name *</label>
+            <input class="nform-input" id="nf-label" type="text" placeholder="e.g. PIF, G42, Careem…" required />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-type">Type *</label>
+            <select class="nform-select" id="nf-type"></select>
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-country">Country / Region</label>
+            <input class="nform-input" id="nf-country" type="text" placeholder="e.g. UAE, Saudi Arabia" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-flag">Flag Emoji</label>
+            <input class="nform-input" id="nf-flag" type="text" placeholder="🇦🇪" maxlength="4" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-size">Importance (1–5)</label>
+            <input class="nform-input" id="nf-size" type="number" min="1" max="5" value="2" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-founded">Founded Year</label>
+            <input class="nform-input" id="nf-founded" type="number" placeholder="2020" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-aum">AUM / Fund Size</label>
+            <input class="nform-input" id="nf-aum" type="text" placeholder="e.g. $750B, $2M" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="nf-tags">Tags (comma-separated)</label>
+            <input class="nform-input" id="nf-tags" type="text" placeholder="AI, MENA, SWF…" />
+          </div>
+          <div class="nform-group full">
+            <label class="nform-label" for="nf-desc">Description</label>
+            <textarea class="nform-textarea" id="nf-desc" placeholder="Brief description of the entity, its role in the MENA ecosystem, key deals…"></textarea>
+          </div>
+        </div>
+        <div class="nmodal-actions">
+          <button class="btn btn-ghost" id="node-form-cancel">Cancel</button>
+          <button class="btn btn-primary" id="node-form-submit">Save Entity</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Connection Modal -->
+    <div class="nmodal-overlay hidden" id="add-conn-modal" role="dialog" aria-modal="true" aria-labelledby="conn-form-title">
+      <div class="nmodal">
+        <div class="nmodal-title" id="conn-form-title">→ Add Connection</div>
+        <div class="nmodal-sub">Create a directional link between two entities (e.g. investor → portfolio company).</div>
+        <div class="nform-group">
+          <label class="nform-label" for="conn-source">Source Entity (investor / creator)</label>
+          <select class="nform-select" id="conn-source"></select>
+        </div>
+        <div class="nform-group">
+          <label class="nform-label" for="conn-target">Target Entity (investee / partner)</label>
+          <select class="nform-select" id="conn-target"></select>
+        </div>
+        <div class="nform-grid">
+          <div class="nform-group">
+            <label class="nform-label" for="conn-label">Connection Label</label>
+            <input class="nform-input" id="conn-label" type="text" placeholder="e.g. Invested, Acquired, Created…" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="conn-value">Amount (USD billions)</label>
+            <input class="nform-input" id="conn-value" type="number" step="0.1" placeholder="e.g. 1.5" />
+          </div>
+          <div class="nform-group">
+            <label class="nform-label" for="conn-year">Year</label>
+            <input class="nform-input" id="conn-year" type="number" placeholder="2024" />
+          </div>
+        </div>
+        <div class="nmodal-actions">
+          <button class="btn btn-ghost" id="conn-form-cancel">Cancel</button>
+          <button class="btn btn-primary" id="conn-form-submit">Add Connection</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- MODULE E – PDF KNOWLEDGE LIBRARY -->
+  <section id="module-pdfs" class="module-panel full-page-module" role="tabpanel" aria-labelledby="nav-btn-pdfs">
+    <div class="full-page-module">
+      <header class="module-header">
+        <div class="module-header-eyebrow">Module E</div>
+        <h1>📚 Knowledge Library &amp; PDF Reader</h1>
+        <p>Curated academic papers, policy documents, and research texts selected by the MARA editorial team. Click any document to open the full-text reader.</p>
+      </header>
+
+      <!-- Filters -->
+      <div class="filter-pills" role="group" aria-label="Filter by category" style="margin-bottom:var(--sp-6)">
+        <button class="filter-pill pdf-filter-pill active" data-filter="all">All Documents</button>
+        <button class="filter-pill pdf-filter-pill" data-filter="Policy">Policy</button>
+        <button class="filter-pill pdf-filter-pill" data-filter="Research">Research</button>
+        <button class="filter-pill pdf-filter-pill" data-filter="Legal">Legal</button>
+        <button class="filter-pill pdf-filter-pill" data-filter="Academic">Academic</button>
+        <button class="filter-pill pdf-filter-pill" data-filter="Report">Report</button>
+        <button class="filter-pill pdf-filter-pill" data-filter="Opinion">Opinion</button>
+      </div>
+
+      <!-- PDF Grid -->
+      <div class="pdf-library-grid" id="pdf-library-grid" role="list" aria-label="PDF documents"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- PDF Viewer Modal -->
+<div id="pdf-viewer-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pdf-viewer-title">
+  <div class="pdf-viewer-bar">
+    <button id="pdf-viewer-close" class="btn btn-ghost" aria-label="Close PDF viewer">✕ Close</button>
+    <div class="pdf-viewer-title" id="pdf-viewer-title"></div>
+    <div class="pdf-viewer-meta" id="pdf-viewer-meta"></div>
+    <a id="pdf-viewer-ext-link" href="#" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px;display:none">↗ Open in new tab</a>
+  </div>
+  <iframe id="pdf-viewer-frame" title="PDF document viewer" allowfullscreen></iframe>
+</div>
+
+<!-- Admin Auth Modal -->
+<div id="admin-auth-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="admin-auth-title">
+  <div class="admin-auth-box">
+    <div class="admin-auth-icon">🔐</div>
+    <div class="admin-auth-title" id="admin-auth-title">MARA Admin</div>
+    <div class="admin-auth-sub">Enter your admin password to access the content management panel.</div>
+    <input class="admin-pw-input" id="admin-pw-input" type="password" placeholder="Enter password…" autocomplete="current-password" aria-label="Admin password" />
+    <div class="admin-auth-actions">
+      <button class="btn btn-ghost" id="admin-auth-cancel" style="flex:1">Cancel</button>
+      <button class="btn btn-primary" id="admin-auth-submit" style="flex:2">🔓 Unlock Admin</button>
+    </div>
+    <div class="admin-auth-hint">Default: <code style="color:var(--accent-teal)">mara2025</code> · Change in Admin → Settings</div>
+  </div>
+</div>
+
+<!-- Admin Panel Overlay -->
+<div id="admin-panel-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="admin-panel-title">
+  <div id="admin-panel">
+    <!-- Sidebar -->
+    <aside id="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">🛡️ MARA Admin</div>
+        <div class="admin-sidebar-sub">Content Management System</div>
+      </div>
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">Modules</div>
+        <button class="admin-nav-btn active" data-admin-tab="countries"><span class="admin-nav-icon">🌍</span> Countries</button>
+        <button class="admin-nav-btn" data-admin-tab="ethics"><span class="admin-nav-icon">🧠</span> Ethics Hub</button>
+        <button class="admin-nav-btn" data-admin-tab="literacy"><span class="admin-nav-icon">📚</span> Literacy Portal</button>
+        <button class="admin-nav-btn" data-admin-tab="pdfs"><span class="admin-nav-icon">📄</span> PDF Library</button>
+        <button class="admin-nav-btn" data-admin-tab="network"><span class="admin-nav-icon">🕸️</span> Investment Graph</button>
+        <div class="admin-nav-section" style="margin-top:var(--sp-3)">System</div>
+        <button class="admin-nav-btn" data-admin-tab="settings"><span class="admin-nav-icon">⚙️</span> Settings &amp; Data</button>
+        <div class="admin-nav-section" style="margin-top:var(--sp-3)">Session</div>
+        <button class="admin-nav-btn" id="admin-logout-sidebar-btn" style="color:var(--accent-crimson)"><span class="admin-nav-icon">🔒</span> Exit Admin Mode</button>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <button class="btn btn-ghost btn-sm" id="admin-export-btn" style="flex:1;font-size:11px">⬇ Export</button>
+        <button class="btn btn-ghost btn-sm" id="admin-import-btn" style="flex:1;font-size:11px">⬆ Import</button>
+        <input type="file" id="admin-import-file" accept=".json" style="display:none" />
+        <button class="btn btn-ghost btn-sm" id="admin-lock-btn" title="Lock admin session" style="font-size:13px">🔒</button>
+        <button class="btn btn-ghost btn-sm" id="admin-close-btn" title="Close panel" style="font-size:13px">✕</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div id="admin-content">
+      <div class="admin-content-header">
+        <div id="admin-content-header-text">
+          <div class="admin-content-title">🌍 Countries</div>
+          <div class="admin-content-sub">Edit country dossiers, scores, and all 5 dossier tabs</div>
+        </div>
+      </div>
+      <div class="admin-content-body" id="admin-content-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Edit Modal -->
+<div id="admin-edit-overlay" class="hidden" role="dialog" aria-modal="true">
+  <div class="admin-edit-modal">
+    <div class="admin-edit-header">
+      <div class="admin-edit-title">Edit</div>
+      <button class="ndp-close" id="admin-edit-cancel-x">✕</button>
+    </div>
+    <div class="admin-edit-body"></div>
+    <div class="admin-edit-footer">
+      <button class="btn btn-ghost" id="admin-edit-cancel">Cancel</button>
+      <button class="btn btn-primary" id="admin-edit-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="admin-save-toast" id="admin-toast" role="status" aria-live="polite"></div>
+
+<!-- JS Modules: data → network-data → admin (patches data) → all modules → pdf-library → app -->
+<script src="js/data.js"></script>
+<script src="js/network-data.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/map.js"></script>
+<script src="js/dossier.js"></script>
+<script src="js/ethics.js"></script>
+<script src="js/literacy.js"></script>
+<script src="js/network.js"></script>
+<script src="js/pdf-library.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

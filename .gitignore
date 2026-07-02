@@ -1,0 +1,6 @@
+.DS_Store
+*.bak
+*.bak2
+step_310_content.txt
+node_modules/
+.env
