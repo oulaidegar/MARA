@@ -11,6 +11,8 @@ const LiteracyModule = (() => {
   function init() {
     renderGuideCards();
     renderGuideAccordions();
+    renderLexicon();
+    setupLexiconSearch();
     renderSimulator();
     initAccordions();
   }
@@ -245,9 +247,48 @@ const LiteracyModule = (() => {
     });
   }
 
+  function renderLexicon(query = '') {
+    const grid = document.getElementById('lexicon-grid');
+    if (!grid) return;
+
+    if (!MARA_DATA.lexicon) MARA_DATA.lexicon = [];
+    const q = query.toLowerCase().trim();
+
+    const filtered = MARA_DATA.lexicon.filter(item => {
+      return item.term.toLowerCase().includes(q) ||
+             item.category.toLowerCase().includes(q) ||
+             item.definition.toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; padding: var(--sp-6); text-align: center; color: var(--text-muted); font-size: var(--text-sm)">
+          🔍 No terms found matching "${query}"
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(item => `
+      <div class="info-card" style="display:flex;flex-direction:column;gap:var(--sp-2)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2)">
+          <div style="font-weight:700;color:var(--text-primary);font-size:var(--text-sm)">${item.term}</div>
+          <span style="font-size:9px;background:var(--accent-teal-dim);color:var(--accent-teal);padding:2px 6px;border-radius:4px;font-weight:700;text-transform:uppercase;flex-shrink:0">${item.category}</span>
+        </div>
+        <p style="font-size:var(--text-sm);line-height:1.5;color:var(--text-secondary);margin:0">${item.definition}</p>
+      </div>
+    `).join('');
+  }
+
+  function setupLexiconSearch() {
+    const input = document.getElementById('lexicon-search');
+    if (!input) return;
+    input.addEventListener('input', e => renderLexicon(e.target.value));
+  }
+
   function refresh() {
     renderGuideCards();
     renderGuideAccordions();
+    renderLexicon(document.getElementById('lexicon-search')?.value || '');
     initAccordions();
   }
 

@@ -1533,5 +1533,14 @@ const MARA_DATA = {
         }
       ]
     }
+  ],
+  lexicon: [
+    { term: 'Compute Sovereignty', category: 'Infrastructure', definition: 'The possession of independent physical hardware resources (such as GPU clusters and hyper-scale data centers) situated inside national borders to execute high-performance workloads without foreign software or hardware lock-in.' },
+    { term: 'Data Localization', category: 'Policy', definition: 'Regulatory mandates requiring that digital personal records, transactional data, or metadata generated within a country\'s territory be stored and processed on servers physically located inside national borders.' },
+    { term: 'Open-Weight Model', category: 'Infrastructure', definition: 'An AI model whose neural weights and parameters are published publicly (e.g., UAE\'s Falcon), allowing developers to run and audit it locally, though the raw training datasets remain proprietary.' },
+    { term: 'GDPR Adequacy Grid', category: 'Policy', definition: 'A framework for comparing third-party countries\' privacy safeguards, independent regulatory authorities, and enforcement mechanisms against the European Union\'s GDPR standard.' },
+    { term: 'Brain Drain Loop', category: 'Ecosystem', definition: 'The migration cycle where top academic research talent, software developers, and mathematical experts migrate from developing MENA states to Western tech hubs due to high wages and research capital.' },
+    { term: 'Digital Sovereignty Paradox', category: 'Ecosystem', definition: 'The friction arising when a government attempts to enforce legal and architectural control over its domestic digital sphere while relying on US or Chinese infrastructure (such as Microsoft Azure, AWS, and NVIDIA supply chains).' },
+    { term: 'Arabic NLP', category: 'Technology', definition: 'Computational techniques and datasets tailored to process, parse, and generate the Arabic language, addressing the grammatical and morphological complexity of Modern Standard Arabic (MSA) and regional dialects.' }
   ]
 };

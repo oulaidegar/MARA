@@ -13,6 +13,7 @@ const AdminModule = (() => {
     PAPERS:   'mara-ethics-papers',
     ORGS:     'mara-ethics-orgs',
     GUIDES:   'mara-literacy-guides',
+    LEXICON:  'mara-lexicon',
     PDFS:     'mara-pdfs',
   };
   const DEFAULT_PW = 'mara2025';
@@ -26,6 +27,7 @@ const AdminModule = (() => {
     _patchArray(LS.PAPERS,   d => { MARA_DATA.policyPapers  = d; });
     _patchArray(LS.ORGS,     d => { MARA_DATA.organizations = d; });
     _patchArray(LS.GUIDES,   d => { MARA_DATA.guides        = d; });
+    _patchArray(LS.LEXICON,  d => { MARA_DATA.lexicon       = d; });
     // Countries: merge per-country overrides
     const countries = _load(LS.COUNTRIES);
     if (countries) Object.assign(MARA_DATA.countries, countries);
@@ -580,16 +582,32 @@ const AdminModule = (() => {
   // ─────────────────────────────────────────────────────────────
   function renderLiteracyTab(body) {
     body.innerHTML = `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:var(--sp-4)">
-        <button class="btn btn-primary" id="admin-add-guide">＋ Add Guide</button>
+      <div style="margin-bottom: var(--sp-6)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3)">
+          <h3 class="admin-content-title" style="font-size:var(--text-md)">📚 Educational Guides</h3>
+          <button class="btn btn-primary btn-sm" id="admin-add-guide">＋ Add Guide</button>
+        </div>
+        <div class="admin-list" id="admin-guides-list"></div>
       </div>
-      <div class="admin-list" id="admin-guides-list"></div>
+      <div style="height:1px;background:var(--border-subtle);margin:var(--sp-5) 0"></div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3)">
+          <h3 class="admin-content-title" style="font-size:var(--text-md)">📖 Regional AI Lexicon</h3>
+          <button class="btn btn-primary btn-sm" id="admin-add-lexicon">＋ Add Term</button>
+        </div>
+        <div class="admin-list" id="admin-lexicon-list"></div>
+      </div>
     `;
+
+    // Render guides
     const list = document.getElementById('admin-guides-list');
     MARA_DATA.guides.forEach((g, i) => {
       list.innerHTML += `<div class="admin-item-card">
         <div class="admin-item-icon">${g.emoji}</div>
-        <div class="admin-item-info"><div class="admin-item-name">${g.title}</div><div class="admin-item-meta">${g.subtitle} · ${g.sections?.length||0} sections</div></div>
+        <div class="admin-item-info">
+          <div class="admin-item-name">${g.title}</div>
+          <div class="admin-item-meta">${g.subtitle} · ${g.sections?.length||0} sections</div>
+        </div>
         <div class="admin-item-actions">
           <button class="admin-item-btn edit" data-idx="${i}">✏️ Edit</button>
           <button class="admin-item-btn delete" data-idx="${i}">🗑️</button>
@@ -599,6 +617,29 @@ const AdminModule = (() => {
     list.querySelectorAll('.admin-item-btn.edit').forEach(b => b.addEventListener('click', () => openGuideEditor(+b.dataset.idx)));
     list.querySelectorAll('.admin-item-btn.delete').forEach(b => b.addEventListener('click', () => { if(confirm('Delete guide?')) { MARA_DATA.guides.splice(+b.dataset.idx, 1); _save(LS.GUIDES, MARA_DATA.guides); renderLiteracyTab(body); LiteracyModule.refresh(); showToast('🗑️ Guide removed'); } }));
     document.getElementById('admin-add-guide').onclick = () => openGuideEditor(null);
+
+    // Render lexicon
+    const lexList = document.getElementById('admin-lexicon-list');
+    if (!MARA_DATA.lexicon) MARA_DATA.lexicon = [];
+    MARA_DATA.lexicon.forEach((item, i) => {
+      lexList.innerHTML += `<div class="admin-item-card">
+        <div class="admin-item-icon">📖</div>
+        <div class="admin-item-info">
+          <div class="admin-item-name">
+            ${item.term} 
+            <span style="font-size:9px;background:var(--accent-teal-dim);color:var(--accent-teal);padding:2px 6px;border-radius:4px;margin-left:8px;font-weight:700;text-transform:uppercase">${item.category}</span>
+          </div>
+          <div class="admin-item-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px">${item.definition}</div>
+        </div>
+        <div class="admin-item-actions">
+          <button class="admin-item-btn edit" data-idx="${i}">✏️ Edit</button>
+          <button class="admin-item-btn delete" data-idx="${i}">🗑️</button>
+        </div>
+      </div>`;
+    });
+    lexList.querySelectorAll('.admin-item-btn.edit').forEach(b => b.addEventListener('click', () => openLexiconEditor(+b.dataset.idx)));
+    lexList.querySelectorAll('.admin-item-btn.delete').forEach(b => b.addEventListener('click', () => { if(confirm('Delete glossary term?')) { MARA_DATA.lexicon.splice(+b.dataset.idx, 1); _save(LS.LEXICON, MARA_DATA.lexicon); renderLiteracyTab(body); LiteracyModule.refresh(); showToast('🗑️ Term removed'); } }));
+    document.getElementById('admin-add-lexicon').onclick = () => openLexiconEditor(null);
   }
 
   function openGuideEditor(idx) {
@@ -667,6 +708,49 @@ const AdminModule = (() => {
 
   function _bindRemove(row) {
     row.querySelector('.array-item-remove').addEventListener('click', () => row.remove());
+  }
+
+  function openLexiconEditor(idx) {
+    const isNew = idx === null;
+    const item = isNew ? { term: '', category: 'Policy', definition: '' } : MARA_DATA.lexicon[idx];
+
+    openEditModal(`${isNew ? '＋ Add' : '✏️ Edit'} Glossary Term`, `
+      <div class="admin-form-grid">
+        <div class="admin-form-group"><label class="admin-form-label">Term Name</label><input class="admin-form-input" id="lf-term" value="${item.term || ''}" placeholder="e.g. Data Sovereignty" /></div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Category</label>
+          <select class="admin-form-select" id="lf-category">
+            <option value="Infrastructure" ${item.category === 'Infrastructure' ? 'selected' : ''}>Infrastructure</option>
+            <option value="Policy" ${item.category === 'Policy' ? 'selected' : ''}>Policy</option>
+            <option value="Ecosystem" ${item.category === 'Ecosystem' ? 'selected' : ''}>Ecosystem</option>
+            <option value="Technology" ${item.category === 'Technology' ? 'selected' : ''}>Technology</option>
+          </select>
+        </div>
+        <div class="admin-form-group full">
+          <label class="admin-form-label">Definition</label>
+          <textarea class="admin-form-textarea" id="lf-definition" placeholder="Write term definition here…" style="min-height:100px">${item.definition || ''}</textarea>
+        </div>
+      </div>
+    `, () => {
+      const term = _v('lf-term').trim();
+      const category = _v('lf-category');
+      const definition = _v('lf-definition').trim();
+
+      if (!term || !definition) {
+        alert('Please fill in both Term Name and Definition.');
+        return false;
+      }
+
+      const entry = { term, category, definition };
+      if (isNew) MARA_DATA.lexicon.push(entry);
+      else MARA_DATA.lexicon[idx] = entry;
+
+      _save(LS.LEXICON, MARA_DATA.lexicon);
+      LiteracyModule.refresh();
+      renderLiteracyTab(document.getElementById('admin-content-body'));
+      showToast('✅ Term saved');
+      return true;
+    });
   }
 
   // ─────────────────────────────────────────────────────────────
