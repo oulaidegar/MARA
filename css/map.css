@@ -19,19 +19,19 @@
 }
 .country-path.non-mena {
   fill: var(--bg-surface-3);
-  stroke: var(--border-light);
+  stroke: var(--border-subtle);
   pointer-events: none;
   cursor: default;
 }
 .country-path.ocean {
-  fill: var(--bg-void);
+  fill: transparent;
   stroke: none;
   pointer-events: none;
 }
 .country-path.mena {
   cursor: pointer;
-  stroke: rgba(0,0,0,0.25);
-  stroke-width: 0.8px;
+  stroke: var(--bg-surface);
+  stroke-width: 1px;
 }
 .country-path.mena.tier-1 {
   fill: var(--tier-1);

@@ -8,17 +8,17 @@
 /* ─── Custom Properties ──────────────────────────────────── */
 :root {
   /* Backgrounds — light pearl / white surfaces */
-  --bg-void:       #F0F2F7;
-  --bg-base:       #F4F6FB;
+  --bg-void:       #F8F9FA;
+  --bg-base:       #F3F4F6;
   --bg-surface:    #FFFFFF;
-  --bg-surface-2:  #F7F9FD;
-  --bg-surface-3:  #EEF1F8;
-  --bg-overlay:    rgba(244, 246, 251, 0.92);
+  --bg-surface-2:  #FAFAFA;
+  --bg-surface-3:  #F1F3F5;
+  --bg-overlay:    rgba(255, 255, 255, 0.95);
 
-  /* Accents — same hues, adjusted saturation for light bg */
-  --accent-teal:   #00A688;
-  --accent-teal-2: #007A64;
-  --accent-teal-dim: rgba(0, 166, 136, 0.10);
+  /* Accents — premium bold crimson brand colors */
+  --accent-teal:   #E51A1A;
+  --accent-teal-2: #B91C1C;
+  --accent-teal-dim: rgba(229, 26, 26, 0.08);
   --accent-gold:   #C9890A;
   --accent-gold-2: #A36B00;
   --accent-gold-dim: rgba(201, 137, 10, 0.10);
@@ -39,26 +39,26 @@
   --tier-3-glow:  rgba(220, 38, 38, 0.25);
 
   /* Text */
-  --text-primary:  #0F1729;
-  --text-secondary:#2D3F60;
-  --text-muted:    #5A6E94;
+  --text-primary:  #0F172A;
+  --text-secondary:#334155;
+  --text-muted:    #64748B;
   --text-faint:    #94A3B8;
   --text-inverse:  #FFFFFF;
 
   /* Borders */
-  --border-subtle: rgba(30, 60, 120, 0.08);
-  --border-light:  rgba(30, 60, 120, 0.13);
-  --border-medium: rgba(30, 60, 120, 0.20);
-  --border-accent: rgba(0, 166, 136, 0.35);
+  --border-subtle: rgba(15, 23, 42, 0.06);
+  --border-light:  rgba(15, 23, 42, 0.10);
+  --border-medium: rgba(15, 23, 42, 0.16);
+  --border-accent: rgba(229, 26, 26, 0.30);
 
   /* Glassmorphism — light tinted glass */
   --glass-bg:      rgba(255, 255, 255, 0.72);
-  --glass-border:  rgba(30, 60, 120, 0.10);
+  --glass-border:  rgba(15, 23, 42, 0.08);
   --glass-blur:    blur(16px);
 
   /* Typography */
   --font-sans:  'Inter', system-ui, sans-serif;
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
   --font-mono:  'JetBrains Mono', monospace;
 
   /* Type Scale */
@@ -84,28 +84,28 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
-  /* Radii */
+  /* Radii - tightened for a refined, premium aesthetic */
   --r-sm:  4px;
-  --r-md:  8px;
-  --r-lg:  12px;
-  --r-xl:  16px;
-  --r-2xl: 24px;
+  --r-md:  6px;
+  --r-lg:  8px;
+  --r-xl:  12px;
+  --r-2xl: 16px;
   --r-full: 9999px;
 
-  /* Shadows — warm-grey, crisp and modern */
-  --shadow-sm:  0 1px 3px rgba(15,23,60,0.08), 0 1px 2px rgba(15,23,60,0.05);
-  --shadow-md:  0 4px 16px rgba(15,23,60,0.10), 0 2px 4px rgba(15,23,60,0.06);
-  --shadow-lg:  0 12px 40px rgba(15,23,60,0.13), 0 4px 12px rgba(15,23,60,0.07);
-  --shadow-xl:  0 24px 64px rgba(15,23,60,0.15), 0 8px 24px rgba(15,23,60,0.09);
-  --shadow-teal: 0 0 20px rgba(0, 166, 136, 0.18);
-  --shadow-gold: 0 0 20px rgba(201, 137, 10, 0.18);
+  /* Shadows — clean and crisp */
+  --shadow-sm:  0 1px 2px rgba(15,23,42,0.05);
+  --shadow-md:  0 4px 12px rgba(15,23,42,0.06);
+  --shadow-lg:  0 8px 24px rgba(15,23,42,0.08);
+  --shadow-xl:  0 16px 40px rgba(15,23,42,0.10);
+  --shadow-teal: 0 0 20px rgba(229, 26, 26, 0.15);
+  --shadow-gold: 0 0 20px rgba(201, 137, 10, 0.12);
 
   /* Transitions */
-  --t-fast:   120ms cubic-bezier(0.4, 0, 0.2, 1);
-  --t-normal: 220ms cubic-bezier(0.4, 0, 0.2, 1);
-  --t-base:   220ms cubic-bezier(0.4, 0, 0.2, 1);
-  --t-slow:   380ms cubic-bezier(0.4, 0, 0.2, 1);
-  --t-spring: 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast:   100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-normal: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-base:   180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Z-Index */
   --z-map:       10;
@@ -150,24 +150,24 @@ body {
 
 /* Selection */
 ::selection {
-  background: rgba(0, 212, 170, 0.25);
+  background: rgba(229, 26, 26, 0.15);
   color: var(--text-primary);
 }
 
 /* ─── Grid Background ───────────────────────────────────── */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(229, 26, 26, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(229, 26, 26, 0.015) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 /* ─── Typography ────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
   color: var(--text-primary);
 }
 h1 { font-size: var(--text-3xl); }
